@@ -1,0 +1,115 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src * data: gap: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <script src="components/loader.js"></script>
+  <script src="lib/angular/angular.min.js"></script>
+  <script src="lib/onsenui/js/onsenui.min.js"></script>
+  <script src="lib/onsenui/js/angular-onsenui.min.js"></script>
+  <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.4.1.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" />
+  
+
+  <link rel="stylesheet" href="components/loader.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
+  <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Pushpak</h1>
+      <div id="map-canvas" style="width:680px;height:400px"></div>
+    </div>
+        <script>
+    window.lat = 18.4959047;
+    window.lng = 73.9300923;
+    var map;
+    var mark;
+    var lineCoords = [];
+    
+    var initialize = function() {
+      map  = new google.maps.Map(document.getElementById('map-canvas'), {center:{lat:lat,lng:lng},zoom:15,mapTypeId:'hybrid'});
+      mark = new google.maps.Marker({position:{lat:lat, lng:lng}, map:map});
+      lineCoords.push(new google.maps.LatLng(window.lat, window.lng));
+    };
+    window.initialize = initialize;
+    
+     var redraw = function(payload) {
+      lat = payload.message.lat;
+      lng = payload.message.lng;
+      map.setCenter({lat:lat, lng:lng, alt:0});
+      mark.setPosition({lat:lat, lng:lng, alt:0});
+      lineCoords.push(new google.maps.LatLng(lat, lng));
+      var lineCoordinatesPath = new google.maps.Polyline({
+        path: lineCoords,
+        geodesic: true,
+        strokeColor: '#F70D1A'
+      });
+     lineCoordinatesPath.setMap(map);
+    };
+    
+    
+    var pnChannel = "map-channel";
+    var pubnub = new PubNub({
+      publishKey: 'pub-c-f1c1c155-942d-40ad-afd6-8110a1e62abe',
+      subscribeKey: 'sub-c-03d258c0-9cea-11e7-8e6b-ae1a713ba7dc'
+    });
+    
+    
+    pubnub.subscribe({channels: [pnChannel]});
+    pubnub.addListener({message:redraw});
+    var x = document.getElementById("map-canvas");
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition);
+                } else {
+                    x.innerHTML = "Geolocation is not supported by this browser.";
+                }
+            }
+            function showPosition(position) {
+              if (position && position.coords) {
+               map  = new google.maps.Map(document.getElementById('map-canvas'), {center:{lat:lat,lng:lng},zoom:15,mapTypeId:'hybrid'});
+      mark = new google.maps.Marker({position:{lat:lat, lng:lng}, map:map});
+      lineCoords.push(new google.maps.LatLng(window.lat, window.lng));
+      var redraw = function(payload) {
+      lat = payload.message.lat;
+      lng = payload.message.lng;
+      map.setCenter({lat:lat, lng:lng, alt:0});
+      mark.setPosition({lat:lat, lng:lng, alt:0});
+      lineCoords.push(new google.maps.LatLng(lat, lng));
+      var lineCoordinatesPath = new google.maps.Polyline({
+        path: lineCoords,
+        geodesic: true,
+        strokeColor: '#F70D1A'
+      });
+     lineCoordinatesPath.setMap(map);
+    };
+    
+    
+    var pnChannel = "map-channel";
+    var pubnub = new PubNub({
+      publishKey: 'pub-c-f1c1c155-942d-40ad-afd6-8110a1e62abe',
+      subscribeKey: 'sub-c-03d258c0-9cea-11e7-8e6b-ae1a713ba7dc'
+    });
+    
+    
+    pubnub.subscribe({channels: [pnChannel]});
+    pubnub.addListener({message:redraw});
+              } else {
+                x.innerHTML = "Location unavailable";
+              }
+            }
+                
+                
+     setInterval(function() {
+      showPosition(getLocation());
+      pubnub.publish({channel:pnChannel, message:{lat:window.lat + 0.001, lng:window.lng + 0.01}});
+    },5000);
+  </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyC96N32_1ADwKzHg8nipCwGq5dz034PhUQ&callback=initialize"></script>
+  </body>
+</html>
